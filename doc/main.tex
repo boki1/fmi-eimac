@@ -1,0 +1,441 @@
+\documentclass[numbering=fraction]{beamer}
+\usetheme[progressbar=frametitle]{metropolis}
+
+\usepackage[bulgarian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[style=alphabetic,backend=biber]{biblatex}
+\usepackage{blindtext}
+\usepackage{tikz}
+\usepackage{progressbar}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{caption}
+\captionsetup{labelformat=simple, font={tiny,sf}}
+\usepackage{fontawesome}
+\uselanguage{Bulgarian}
+\languagepath{Bulgarian}
+\providetranslation[to=Bulgarian]{Corollary}{Следствие}
+
+\addbibresource{bibliography.bib}
+\graphicspath{{./}}
+
+\usepackage[table]{xcolor}
+\definecolor{lightgrey}{HTML}{969696}
+\definecolor{lightergrey}{HTML}{a5a5a5}
+
+\renewcommand{\emph}[1]{\textit{\textcolor{salmon}{#1}}}
+
+\RequirePackage{fancyvrb}
+\RecustomVerbatimEnvironment{Verbatim}{Verbatim}{fontfamily=cmtt,framesep=3mm,fontsize=\small,numbers=left,xleftmargin=7mm,numberblanklines=false,frame=lines,rulecolor=\color{lightpurple}}
+
+\DefineVerbatimEnvironment{Code}{Verbatim}{fontfamily=cmtt,framesep=3mm,fontsize=\small,numbers=left,xleftmargin=7mm,numberblanklines=false,frame=lines,rulecolor=\color{salmon}, tabsize=2}
+
+\title{Кодове на Рид-Соломон}
+\titlegraphic{\vspace{4cm}\flushright\includegraphics[width=2cm,height=1.25cm]{fmi-logo.png}}
+\author[Author]{Кристиян Стоименов}
+\institute{Факултет по математика и информатика,\\\textbf{Ефективна реализация\\ на математически алгоритми\\ и концепции}}
+\date{\today{}}
+
+\usepackage{mdframed}
+\usepackage{amsthm}
+
+\newtheorem{dfn}{Дефиниция}[section]
+\surroundwithmdframed[
+linewidth=1pt,
+linecolor=salmon,
+backgroundcolor=lightergrey!10,
+roundcorner=15pt,
+skipabove=\topsep,
+skipbelow=\topsep
+]{dfn}
+\newtheorem{thm}{Теорема}[section]
+\surroundwithmdframed[
+linewidth=1pt,
+linecolor=redish,
+backgroundcolor=lightergrey!10,
+roundcorner=15pt,
+skipabove=\topsep,
+skipbelow=\topsep
+]{thm}
+
+\begin{document}
+\include{template}
+
+\begin{frame}[plain]{}
+\maketitle
+\end{frame}
+
+\begin{frame}
+	\begin{dfn}\bigskip
+		Код на Рид-Соломон наричаме ...
+	\end{dfn}
+\end{frame}
+
+\begin{frame}
+	\begin{figure}
+		\centering \label{fig:mascot-no-frame-cartoonish}
+		\includegraphics[width=.7\textwidth]{mascot-no-frame-cartoonish.png}
+	\end{figure}
+\end{frame}
+
+\section{Какво е код?}
+\begin{frame}[allowframebreaks]
+\par \emph{Шумозащитно кодиране} наричаме набор от математически средства и алгоритми, чрез които грешки, възникнали при предаване на информация по канал между два агента, биват разпознати и поправени.
+\begin{figure}[allowframebreaks]
+	\centering \label{fig:setup}
+	\includegraphics[width=.6\textwidth]{setup.png}
+	\caption{Опростен модел на предаване на информация през комуникационен канал.}
+\end{figure}
+\framebreak
+\begin{figure}
+	\centering \label{fig:voy2}
+	\includegraphics[width=.9\textwidth]{voyager2.png}
+	\caption{Voyager 2 е безпилотна космическа сонда на НАСА, изстреляна през 1977 г., която изследва външните планети на Слънчевата система. Единственият апарат, посетил Уран и Нептун. Снимката е взема от \autocite{voyager2}.}
+\end{figure}
+\framebreak
+\begin{figure}
+	\centering \label{fig:raid6}
+	\includegraphics[width=.7\textwidth]{raid6.png}
+	\caption{RAID-6 е схема за нареждане на масив от дискове с цел максимално бързодействие и едновременно с това издръжливост при грешка. \autocite{raid6}}
+\end{figure}
+\framebreak
+\begin{itemize}
+	\item Приложенията на шумозащитното кодиране са много. Някои други от тях включват CD \autocite{cd} и QR кодовете \autocite{qr}.
+	\item Основния фактор, допускащ ефективността на шумозащитното кодиране е следната теоремата за шумния канал (Шанън, 1948) \autocite{mackay_itila}. В общо линии тя гласи, че за произволен шумен канал, съобщения могат да се предават без загуба на информация, стига преносът да не надхвърля \textit{капацитета} - максималната пропускателна способност, на канала.
+\end{itemize}
+\framebreak
+\par Какво представлява шумът?
+\begin{figure}[c]
+	\centering \label{fig:noise}
+	\includegraphics[height=.35\textheight]{noise-p.png}
+	\hspace*{3em}
+	\includegraphics[height=.45\textheight]{noisy-channel.jpg}
+	\caption{Двоичен симетричен канал.}
+\end{figure}
+\framebreak
+\par \emph{Шумозащитен код}, или за по-кратко само \emph{код}, наричаме систематичен подход за съпоставяне между съобщение и кодова дума. Това съпоставяне се разглежда в две посоки:
+\begin{itemize}
+    \item Посоката \fcolorbox{salmon}{white}{,,съобщение $\mapsto$ кодова дума''} се нарича \emph{кодиране}. \textit{Кодирането изменя съобщението, добавяйки \emph{проверочни символи} \footnote{на англ. redundancy}, такива че входното съобщение да бъде възстановено в случай на промяна по време на предаване.}
+    \item Обратната, \fcolorbox{salmon}{white}{,,кодова дума $\mapsto$ съобщение''}, се нарича \emph{декодиране} и именно тя е същината на един шумозащитен код. \textit{Декодирането използва въведените от кодирането проверочни символи, за да поправи възникнали грешки от предаването, \textbf{ако свойствата на шумозащитния код позволяват това}.}
+\end{itemize}
+\framebreak
+\begin{figure}[allowframebreaks]
+	\centering \label{fig:channel}
+	\includegraphics[width=.95\textwidth]{channel.png}
+	\caption{Опростен модел на предаване на информация през комуникационен канал, използвайки шумозащитен код.}
+\end{figure}
+\end{frame}
+
+\begin{frame}{}
+	\egmarker
+	\par {\Large \textbf{Код с повторение}}
+	\par Нека разгледаме един елементарен пример за шумозащитен код, за да илюстрираме по-ясно модела на предаване на информация през комуникационен канал.
+	\par Следва да фиксираме няколко основни параметъра на нашия код - дължина на съобщението и брой проверочни символа. От тях получаваме директно и максималния брой грешки, които шумозащитния код е способен да възстанови.
+	\par Нека за нашите цели съобщението се състои от 16 бита, а броят на проверочните символи е 32 бита. Така кодовата дума става за дължина 48 бита.
+\end{frame}
+\begin{frame}[fragile]
+	\egmarker
+	\par Използваме следния алгоритъм за кодиране. Ефектът от него е, че всеки бит от съобщението се предава точно по три пъти, т.е. повтаряме съобщението три пъти. Оттам и името на този код.
+	\begin{Code}
+u64 encode(u16 msg)
+{
+	u64 codeword=msg|msg<<16|msg<<32;
+	return codeword;
+}
+	\end{Code}
+\end{frame}
+\begin{frame}[fragile]
+	\egmarker
+	\vspace*{-2em}
+	\par Декодирането също става очевидно - за всеки от битовете в получената кодова дума избираме стойност за съобщението, съответстваща на модата от стойностите на трите копия.
+	\vspace*{-1em}
+	\begin{Code}
+u16 decode(u64 codeword)
+{
+	u16 msg=0;
+	for (int i=0; i<16; ++i
+	{
+		int l1=1<<i, l2=1<<(16+i), l3=1<<(32+i);
+		int b1=!!(codeword&l1), b2=!!(codeword&l2),
+		  b3=!!(codeword&l3);
+		msg |= b1+b2+b3>>1<<i;
+	}
+	return msg;
+}
+	\end{Code}
+\end{frame}
+
+\section{Основни понятия}
+\begin{frame}
+	\par Разграничаваме \emph{откриване} от \emph{поправяне} на грешка. В първия случай имаме единствено информация, че полученото съобщение се различава от изпратеното. Във втория случай знаем не само това, ами и кои точно битове са били промени.
+	\par Друг вариант за грешка е обаче някои от битовете да бъдат \textit{пропуснати}, а не обърнати. Също така възникват и други особености при бройни системи, които не са двоичната - в такива случаи не е достатъчно да знаем къде е възникнала грешката, тъй като има повече от една възможна друга стойност.
+\end{frame}
+\begin{frame}
+	\egmarker
+	\par Прост пример за това е т.нар. \emph{проверка по четност}. Нейната идея е следната. Ако имаме съобщение, съставено от например 7 двоични символа, то проверка по четност реализираме, добавяйки символ с такава стойност, че броя на всички единици сред съобщението да бъде четен. Очевидно в случая можем да забележим единствено нечетен брой грешки, а да поправим, не можем да нито една от тях.
+	\begin{figure}
+		\centering \label{fig:parity-check}
+		\includegraphics[width=.6\textwidth]{parity-check.png}
+		\caption{Прост пример за проверка по четност.}
+	\end{figure}
+\end{frame}
+
+\section{Линейни блокови кодове}
+\begin{frame}
+	\par Нека разгледаме какво точно представлява един шумозащитен код.
+	\par Оттук насетне считаме, че източник съставя съобщения използвайки \textit{символи} от крайно поле $\mathbb{F}$ с мощност $q$. Тъй като полетата, които ни интересуват са крайни, обичайно ги бележим с $GF(q)$.
+	\begin{dfn}
+		\bigskip
+		\par $(n,k)$ \emph{блоков код} $\mathcal{C}$ над азбука от $q$ символа наричаме множество от $q^k$ вектора, всеки от които има дължина $n$. Тези вектори наричаме кодови думи.
+		\par На всеки блоков код съответства енкодер, който съпоставя на \textit{съобщението} $m\in\mathbb{F}^k$ съответна кодова дума $c\in\mathcal{C}$.
+	\end{dfn}
+\end{frame}
+\begin{frame}
+	\par Често кодовете, които ни интересуват имат следното свойство.
+	\begin{dfn}
+		\bigskip
+		\par Нека блоковия $(n,k)$ код $\mathcal{C}$ над $GF(q)$ образува линейно подпространство на линейното пространство от наредените $n$-торки $\mathbb{F}^n_q$. Тогава за $\mathcal{C}$ казваме, че е \emph{линеен} блоков код.
+	\end{dfn}
+	\par Използвайки аксиомите на линейно пространство, получаваме начин за ,,конструиране'' на нови кодови думи. Например, ако $c_1, c_2\in\mathcal{C}$, то $c_1+c_2\in\mathcal{C}$.
+\end{frame}
+\begin{frame}[allowframebreaks]
+	\par Третата основна характеристика на блоковите кодове освен дължината на съобщението и дължината на кодовата дума е неговото минимално разстояние. Именно то определя максималният брой грешки, които кодът може да поправи. За целта ни е необходима следната метрика.
+	\begin{dfn}
+		\bigskip
+		\emph{Разстояние на Хеминг} между две кодови думи $a,b\in\mathcal{C}$, където $\mathcal{C}$ e $(n,k)$ код, наричаме \[
+			d(a,b) := \left| \left\{\, i \mid a_i \ne b_i \,\right\} \right|
+		\]
+	\end{dfn}
+	\framebreak
+	\begin{dfn}
+		\bigskip
+		\par \emph{Минимално разстояние} на $\mathcal{C}$ наричаме \[
+			d(\mathcal{C}) := \min \{\, d(a,b) \mid a,b \in \mathcal{C},\ a \ne b \,\}
+		\]
+		\vspace*{-2em}
+		\par Стойността \[
+			t = \left\lfloor \frac{d-1}{2} \right\rfloor
+		\]
+		наричаме \emph{радиус на опаковка} и съвпада с максималния брой грешки, които могат да бъдат поправени от кода $\mathcal{C}$.
+		\par $(n,k)$ код $\mathcal{C}$, при който $d:=d(\mathcal{C})$, бележим като $(n,k,d)$ код.
+	\end{dfn}
+\end{frame}
+\begin{frame}
+	\begin{figure}
+		\centering \label{fig:sphere-pack}
+		\includegraphics[width=.6\textwidth]{sphere-pack.png}
+		\caption{Абстрактно представяне на кодови думи заедно с радиус на опаковка.}
+	\end{figure}
+\end{frame}
+\begin{frame}
+	\par Оттук насетне ще разглеждаме линейни блокови кодове. Нека $\mathcal{C}$ e $(n,k,d)$ линеен код. От линейната алгебра ни е известно понятието \textit{базис} и знаем също така, че произволен елемент $c\in\mathcal{C}$ може да се представи (по единствен начин) като \textit{линейна комбинация} на базисните вектори. Нека $g_0, \cdots, g_{k-1}$ образува базис на $\mathcal{C}$. Тогава за произволна кодова дума $c\in\mathcal{C}$ е вярно, че \[
+	c = \sum_{i=0}^{k-1} m_i g_i
+	\]
+\end{frame}
+\begin{frame}
+	\par Или, записвайки вектори $g_i$ като редове на една матрица $G$ \[
+	G =	\begin{bmatrix}
+		g_0 \\
+		g_1 \\
+		\vdots \\
+		g_{k-1}
+	\end{bmatrix}
+	\]
+	и съобщението като вектор-ред \[
+	m = [ m_0 \cdots m_{k-1} ]
+	\]
+	кодовата дума, съответстваща на съобщението $m$ получаваме като \[
+	c = mG
+	\]
+	\par Матрицата $G$ се нарича \emph{пораждаща} за кода $\mathcal{C}$. Чрез нея директно получаваме алгоритъм за кодиране - а именно чрез умножение.
+\end{frame}
+\begin{frame}
+	\egmarker
+	\par Нека за илюстрация разгледаме един от първите използвани шумозащитни кодове - $(7,4)$ кодът на Хеминг. Чрез него 4-битови съобщения се кодират в 7-битови кодови думи, използвайки 3 проверочни бита. Една негова пораждаща матрица е \[
+		G =
+		\begin{bmatrix}
+			1 & 1 & 0 & 1 & 0 & 0 & 0 \\
+			0 & 1 & 1 & 0 & 1 & 0 & 0 \\
+			0 & 0 & 1 & 1 & 0 & 1 & 0 \\
+			0 & 0 & 0 & 1 & 1 & 0 & 1
+		\end{bmatrix}
+	\]
+	\par Тогава съобщението $m = [1 0 0 1]$ кодираме по следния начин \[
+		c = mG = [ 1 1 0 0 1 0 1 ]
+	\]
+\end{frame}
+\begin{frame}
+	\par Използвайки метриката \textit{разстояние по Хеминг} схемата на декодиране се нарича \emph{метод на максималното правдоподобие}. Имаме следната
+	\begin{thm}\bigskip
+		За двоичен симетричен канал с вероятност за грешка $p<\frac{1}{2}$ декодирането по метода на максималното правдоподобие е еквивалентно на декодиране до най-близката кодова дума.
+	\end{thm}
+	\par Сега ще разгледаме как работи това декодиране чрез таблица на Слепян.
+\end{frame}
+\begin{frame}
+	\par Преди да посочим алгоритъма, ни необходима е следната
+	\begin{dfn}\bigskip
+		\par Нека $\mathcal{C}$ е двоичен $(n,k)$ код. \emph{Съседен клас} на кода $\mathcal{C}$, определен от вектора $y$ наричаме множеството \[
+			y + \mathcal{C} := \{\, y + c \mid c \in \mathcal{C} \,\}
+		\]
+		\par \emph{Лидер} на съседен клас $y + \mathcal{C}$ наричаме елемента \[
+		\hat{c} := \min_{c \in y+\mathcal{C}} \operatorname{wt}(c)		
+		\]
+		където ${wt}(c)$ е \emph{теглото} на кодовата дума $c$, т.е. броят не ненулевите битове из двоичната кодова дума.
+	\end{dfn}
+\end{frame}
+
+\begin{frame}
+	\par Нека разгледаме сега алгоритъма за декодиране на получена дума.
+	\par Нека източникът е изпратил кодовата дума $c$, а поради шума на канала се е добавила някаква грешка $e$. До декодера достига (в общия случай) некодова дума $y=c+e$. Тогава е вярно, че \[
+		y+c = (c+e)+c = (c+c)+e = e
+	\]
+	тъй като в $GF(2)$ събирането съвпада с операцията \textsc{изключващо или}, а то има свойството $\forall a \; \bigl( a \oplus a = 0 \bigr)$.
+	\par Оттук сме уверени, че получената дума $y$ и грешката $e$ принадлежат на един и същи съседен клас, както и, че всички възможно грешки при получена дума $y$ са именно думите от този съседен клас.
+\end{frame}
+
+\begin{frame}
+\begin{table}[h]
+	\centering
+	\small
+%	\renewcommand{\arraystretch}{1.5}
+	\begin{tabular}{|c c c c c|l|}
+		\hline
+		$0$ & $c_1$ & $c_2$ & $\dots \dots$ & $c_{M-1}$ &  \\ \cline{1-5}
+		$e_1$ & $e_1 + c_1$ & $e_1 + c_2$ & $\dots \dots$ & $e_1 + c_{M-1}$ & съседни класове \\
+		\multicolumn{5}{|c|}{$\dots \dots \dots \dots \dots \dots \dots \dots \dots \dots \dots \dots \dots \dots$} & с лидери с тегло \\
+		$e_s$ & $e_s + c_1$ & $e_s + c_2$ & $\dots \dots$ & $e_s + c_{M-1}$ & \multicolumn{1}{c|}{$\le t$} \\ \hline
+		$e_{s+1}$ & $e_{s+1} + c_1$ & $e_{s+1} + c_2$ & $\dots \dots$ & $e_{s+1} + c_{M-1}$ & съседни класове \\
+		\multicolumn{5}{|c|}{$\dots \dots \dots \dots \dots \dots \dots \dots \dots \dots \dots \dots \dots \dots$} & с лидери с тегло \\
+		$e_N$ & $e_N + c_1$ & $e_N + c_2$ & $\dots \dots$ & $e_N + c_{M-1}$ & \multicolumn{1}{c|}{$> t$} \\ \hline
+	\end{tabular}
+	\caption{Стандартна таблица на Слепян}
+\end{table}
+\end{frame}
+
+\begin{frame}
+	\demomarker
+	\par Нека разгледаме една примерна стандартна таблица на Слепян.
+\end{frame}
+
+\begin{frame}
+	\par Както забелязвате, този метод е крайно непрактичен по множество причини. Съществуват подходи за неговото опростяване - най-вече за намаляване на таблицата и едновременно с това броя проверки, които са необходими (декодиране чрез синдроми), но за да получим качествено по-добри резултати, са необходими различни свойства на кодовете, които използваме.
+	\par Така достигаме до цикличните кодове.
+\end{frame}
+
+\section{Циклични кодове}
+\begin{frame}[allowframebreaks]
+	\begin{dfn}\bigskip
+		Нека имаме вектор $b=[b_0, b_1, \cdots, b_{n-1}]$. \emph{Циклично преместване} на $b$ наричаме вектор $b'$, получен като координатите са разместени така, че втората е записана на първо място, третата на втората и т.н.. Първата е записана на последно място. \[
+			b' := [b_1, b_2, \cdots b_0]
+		\]
+	\end{dfn}
+	\framebreak
+	\begin{dfn}\bigskip
+		Линеен блоков код, който заедно с всяка своя кодова дума $c=[c_0, \cdots, c_{n-1}]$ съдържа още и неговото циклично завъртане $c'=[c_1, \cdots, c_0]$, се нарича \emph{цикличен код}.
+	\end{dfn}
+	\par При работа с циклични кодове е удачно да имаме дефинирани не само операциите от линейното пространство, но още и \textit{умножение на вектори} над полето $GF(q)$.
+	\par Поради тази причина се използва следното съответствие \[
+		c=[c_0, \cdots, c_{n-1}] \mapsto c(x)=c_0+c_1x+\cdots+c_{n-1}x^{n-1}
+	\]
+	и още по-конкретно израза \[
+		c(\omega)=c_0+c_1\omega+\cdots+c_{n-1}\omega^{n-1}\qquad\text{където}\; \omega^n=1
+	\]
+\end{frame}
+\begin{frame}
+	\begin{figure}
+		\centering \label{fig:roots-of-unity}
+		\rootsofunity{7}
+	
+		\caption{Решения на уравнението $x=\sqrt[7]{1}$. \textbf{Забележка:} Решенията са точно елементите на цикличната група $\mathbb{C}_7$.}
+	\end{figure}
+\end{frame}
+\begin{frame}[allowframebreaks]
+	\par Цикличните кодове, понеже са линейни, имат своя пораждаща матрица. Но освен нея те имат и пораждащ полином -
+	\begin{dfn}\bigskip
+		\par \emph{Пораждащ полином} $g(x)$ на цикличен код $\mathcal{C}$ се нарича полиномът от най-ниска степен, съответстващ на ненулева кодова дума $g\in\mathcal{C}$. Бележим $\mathcal{C}=\langle g \rangle$.
+	\end{dfn}
+	\framebreak
+	\par Той е особен, поради свойствата, следващи от следната
+	\begin{thm}\bigskip
+		Ако имаме цикличен код $\mathcal{C}=\langle g \rangle$, то:
+		\begin{itemize}
+			\item полиномът $g(x)$ дели $x^n-1$ без остатък;
+			\item вектор $c$ е кодова дума \textsc{тстк} $g(x)$ дели $c(x)$;
+			\item ако $deg(g)=r$, то $\mathcal{C}$ e $(n,n-r)$ код, а пораждаща матрица $G$ изглежда така - \[
+			G = \begin{pmatrix}
+				g_0 & g_1 & \dots & g_r & 0 & 0 & \dots & 0 \\
+				0 & g_0 & g_1 & \dots & g_r & 0 & \dots & 0 \\
+				\hdots & \hdots & \hdots & \hdots & \hdots & \hdots & \hdots & \hdots \\
+				0 & 0 & \dots & 0 & g_0 & g_1 & \dots & g_r
+			\end{pmatrix}
+			\]
+		\end{itemize}
+	\end{thm}
+\end{frame}
+\begin{frame}
+	\egmarker
+	\par Можем да видим един примерен цикличен код, който се поражда от полинома $x^3+x+1$, и има кодови думи с дължина 7 бита. \[
+	G =
+	\begin{bmatrix}
+		1 & 1 & 0 & 1 & 0 & 0 & 0 \\
+		0 & 1 & 1 & 0 & 1 & 0 & 0 \\
+		0 & 0 & 1 & 1 & 0 & 1 & 0 \\
+		0 & 0 & 0 & 1 & 1 & 0 & 1
+	\end{bmatrix}
+	\]
+	\par Ха! Изненада! Това отново е $(7,4)$ кодът на Хеминг! \smiley
+\end{frame}
+\begin{frame}[allowframebreaks]
+	\par Сега можем да посочим как работи кодирането на съобщение, използвайки цикличен код.
+	\par Нека имаме $\mathcal{C}=\langle g \rangle$. Входното съобщение представяме чрез \textit{информационен полином} \[
+	i(x) = i_0+\cdots+i_{k-1}x^{k-1}
+	\]
+	\par Имаме два подхода на кодиране, определени от това дали съобщението е част от получената кодова дума, или е ,,разбъркано''. Първият се нарича систематичен и именно него ще обясним тук. В него информационната последователност образува старшите членове на кодовата дума, т.е. \[
+	c(x) = x^{n-k}i(x)+t(x)
+	\]
+	\framebreak
+	\par Знаейки, че $g(x)\;\mid\;c(x)$, можем да използваме теоремата на Евклид - \[
+		x^{n-k}i(x) = g(x)q(x)+r(x)
+	\]
+	и тогава \[
+		c(x)=x^{n-k}i(x)+t(x)=g(x)q(x)+(r(x)+t(x))
+	\]
+	където $r(x)+t(x)$ е от степен по-малка от $n-k$ и се дели на $g(x)$, откъдето $r(x)=-t(x)$.
+\end{frame}
+\begin{frame}
+	\egmarker
+	\par Нека разгледаме един пример. Отново ще разгледаме познатия $(7,4)$ код на Хеминг. За него имаме, че $\mathcal{C}=\langle g \rangle$ при $g(x)=x^3+x+1$. Да вземем например съобщението $1001$. На него съпоставяме информационен полином \[
+		i(x)=1+0x^1+0x^2+1x^3=x^3+1
+	\]
+	\par Кодовата дума получаваме като \[
+		c(x)=x^3i(x)+t(x)=x^6+x^4+x^3 + t(x)
+	\]
+	\par Търсим $t(x)$, разделяйки $x^3i(x)$ на $g(x)$, т.е. $x^6+x^4+x^3$ на $x^3+x+1$. Получаваме $q(x)=x^3$ и $r(x)=0$.
+\end{frame}
+
+\section{Какво е код на Рид-Соломон?}
+\begin{frame}
+\end{frame}
+
+\section{Как се използват Рид-Соломон кодовете?}
+\begin{frame}
+\end{frame}
+
+\section{Какви приложения имат Рид-Соломон кодовете?}
+\begin{frame}
+\end{frame}
+
+\begin{frame}[plain]
+\centering
+\Large{\textbf{Благодаря за вниманието!}}
+\end{frame}
+
+\begin{frame}[plain]
+    \section{Литература}
+\end{frame}
+
+\begin{frame}[noframenumbering,plain,allowframebreaks]
+\printbibliography[heading=none]
+\end{frame}
+
+\end{document}
+

@@ -1,0 +1,98 @@
+\definecolor{salmon}{RGB}{255, 128, 128}
+\definecolor{redish}{HTML}{A20025}
+\definecolor{darkgrey}{RGB}{50, 50, 50}
+
+\setbeamercolor{frametitle}{fg=darkgrey}
+\setbeamercolor{title separator}{fg=salmon}
+\setbeamercolor{footline}{fg=darkgrey}
+\setbeamercolor{progress bar}{fg=salmon}
+\setbeamercolor{alerted text}{fg=salmon}
+\setbeamercolor{block title example}{fg=salmon}
+\setbeamercolor{section in foot}{fg=white, bg=salmon}
+
+\makeatother
+\setbeamertemplate{footline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{section in foot}%
+    \usebeamerfont{title in foot}К. Стоименов
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{section in foot}%
+      \usebeamerfont{title in foot}\insertshorttitle
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{section in foot}%
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex}
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+\makeatletter
+\setbeamertemplate{navigation symbols}{}
+
+\setbeamertemplate{frametitle}
+{
+\vspace*{16pt}
+\Large{\insertframetitle}
+% \insertprogressbar
+}
+
+\setbeamertemplate{section in toc}{{\color{salmon}\inserttocsectionnumber.}~\inserttocsection}
+
+\setbeamertemplate{caption}{\raggedright\insertcaption\par}
+
+
+\renewcommand*{\bibfont}{\footnotesize}
+
+\newcommand{\iu}{{i\mkern1mu}}
+\newcommand{\smiley}{\faSmileO}
+\newcommand{\rootsofunity}[1] {
+\begin{tikzpicture}
+  \coordinate (center) at (0, 0);
+  \def\radius{2cm}
+  \def\n{#1}
+  \pgfmathsetmacro\angle{360/\n}
+  \pgfmathsetmacro\startangle{90}
+
+  \foreach \i in {0,...,\the\numexpr\n-1\relax} {
+    \coordinate (point\i) at ({\startangle+\angle*\i}:\radius);
+    \coordinate (label\i) at ({\startangle+\angle*\i}:\radius+0.25cm);
+    \node[anchor={\startangle+\angle*\i-90}] at (label\i){$\omega_{\n}^{\the\numexpr\n-\i\relax}$};
+    \fill[salmon] (point\i) circle (2pt);
+  }
+
+  \draw[salmon, thick] (point0) \foreach \i in {1,...,\the\numexpr\n-1\relax} { -- (point\i) } -- cycle;
+  \draw[black, thick] (center) circle (\radius);
+  \draw[->] (-2.5,0) -- (2.5,0) node[right] {$\text{x}$};
+  \draw[->] (0,-2.5) -- (0,2.5) node[above] {$\text{y}$};
+\end{tikzpicture}
+}
+
+\newcommand{\egmarker}{
+	\begin{tikzpicture}[remember picture,overlay]
+		\node[anchor=north west, xshift=20pt, yshift=0pt] at (current page.north west) 
+		{\tiny \textcolor{gray}{\raisebox{0.65em}{\rotatebox{270}{$\blacktriangle$}}~Пример}};
+	\end{tikzpicture}
+	
+	\begin{tikzpicture}[remember picture,overlay]
+		\draw[rounded corners=0.2em, line width=0.5pt, gray]
+		([xshift=10pt,yshift=-10pt]current page.north west) 
+		rectangle 
+		([xshift=-10pt,yshift=20pt]current page.south east);
+	\end{tikzpicture}
+	\vspace*{-1.5em}
+}
+\newcommand{\demomarker}{
+	\begin{tikzpicture}[remember picture,overlay]
+		\node[anchor=north west, xshift=20pt, yshift=0pt] at (current page.north west) 
+		{\tiny \textcolor{darkgray}{\raisebox{0.65em}{\rotatebox{270}{$\blacktriangle$}}~Демонстрация}};
+	\end{tikzpicture}
+	
+	\begin{tikzpicture}[remember picture,overlay]
+		\draw[rounded corners=0.2em, line width=0.5pt, darkgray]
+		([xshift=10pt,yshift=-10pt]current page.north west) 
+		rectangle 
+		([xshift=-10pt,yshift=20pt]current page.south east);
+	\end{tikzpicture}
+	\vspace*{-1.5em}
+}
+\newcommand{\floor}[1]{\lfloor #1 \rfloor}
