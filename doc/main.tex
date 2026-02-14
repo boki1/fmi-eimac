@@ -29,7 +29,7 @@
 \DefineVerbatimEnvironment{Code}{Verbatim}{fontfamily=cmtt,framesep=3mm,fontsize=\small,numbers=left,xleftmargin=7mm,numberblanklines=false,frame=lines,rulecolor=\color{salmon}, tabsize=2}
 \DefineVerbatimEnvironment{Mono}{Verbatim}{fontfamily=cmtt,framesep=3mm,fontsize=\tiny,numbers=left,xleftmargin=7mm,numberblanklines=false,frame=none,rulecolor=\color{darkgray}, tabsize=2}
 
-\title{Кодове на Рид-Соломон}
+\title{Кодиране}
 \titlegraphic{\vspace{4cm}\flushright\includegraphics[width=2cm,height=1.25cm]{fmi-logo.png}}
 \author[Author]{Кристиян Стоименов}
 \institute{Факултет по математика и информатика,\\\textbf{Ефективна реализация\\ на математически алгоритми\\ и концепции}}
@@ -77,7 +77,7 @@ skipbelow=\topsep
 	\end{figure}
 \end{frame}
 
-\section{Какво е код?}
+\section{Основни понятия}
 \begin{frame}[allowframebreaks]
 \par \emph{Шумозащитно кодиране} наричаме набор от математически средства и алгоритми, чрез които грешки, възникнали при предаване на информация по канал между два агента, биват разпознати и поправени.
 \begin{figure}[allowframebreaks]
@@ -164,7 +164,6 @@ u16 decode(u64 codeword)
 	\end{Code}
 \end{frame}
 
-\section{Основни понятия}
 \begin{frame}
 	\par Разграничаваме \emph{откриване} от \emph{поправяне} на грешка. В първия случай имаме единствено информация, че полученото съобщение се различава от изпратеното. Във втория случай знаем не само това, ами и кои точно битове са били промени.
 	\par Друг вариант за грешка е обаче някои от битовете да бъдат \textit{пропуснати}, а не обърнати. Също така възникват и други особености при бройни системи, които не са двоичната - в такива случаи не е достатъчно да знаем къде е възникнала грешката, тъй като има повече от една възможна друга стойност.
@@ -177,6 +176,253 @@ u16 decode(u64 codeword)
 		\includegraphics[width=.6\textwidth]{parity-check.png}
 		\caption{Прост пример за проверка по четност.}
 	\end{figure}
+\end{frame}
+
+\section{Код на Хеминг}
+\begin{frame}
+	\par Преди да се насочим към общата теория на линейните блокови кодове, нека разгледаме как е функционирал първият шумозащитен код - малко по-нетривиален пример от кода с повторение. Той е известен като код на Хеминг, който е негов изобретател през 40-те години в Bell Labs.
+	\par Основната идея, на която се основава той е следната: ако поставим
+		\textit{достатъчно} на брой проверки по четност и при това те да бъдат на \textit{точните} места, получаваме удобен и	лесен начин за откриване на \textit{единствена грешка}.
+	\par Ще разгледаме как се случва това при съобщения от 11 бита, които се поставят в 15-битови кодови думи. Подходът се запазва аналогично при блок с произволна дължина $2^m$.
+\end{frame}
+\begin{frame}
+	\begin{center}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{orange!25}0 & \cellcolor{yellow!25}1 & \cellcolor{yellow!25}2 & \cellcolor{green!25}3 \\
+			\hline \cellcolor{yellow!25}4 & \cellcolor{green!25}5  & \cellcolor{green!25}6	& \cellcolor{green!25}7 \\
+			\hline \cellcolor{yellow!25}8 & \cellcolor{green!25}9  & \cellcolor{green!25}10 & \cellcolor{green!25}11 \\
+			\hline \cellcolor{green!25}12 & \cellcolor{green!25}13 & \cellcolor{green!25}14 & \cellcolor{green!25}15 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	
+	\par Използваме този нагласен ,,формат'', попълвайки съобщението, което
+	искаме да изпратим (11 бита) в зелените клетки. В жълтите ще поставим проверочните
+	битовете, а оражевото временно ще игнорираме.
+	\par Стойностите, сега намиращи се в клетките на шаблона, отговарят на ,,индекса'', който ще
+	използваме за съответната клетка (т.е. аналогично можем да си представим и
+	последователно разположение, вместо таблично).
+\end{frame}
+\begin{frame}[allowframebreaks]
+	\par Нека попълним клетките със съобщението \texttt{10011001101}:
+	\begin{center}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{orange!25} & \cellcolor{yellow!25} & \cellcolor{yellow!25} & \cellcolor{green!25}1 \\
+			\hline \cellcolor{yellow!25} & \cellcolor{green!25}0 & \cellcolor{green!25}0 & \cellcolor{green!25}1 \\
+			\hline \cellcolor{yellow!25} & \cellcolor{green!25}1 & \cellcolor{green!25}0 & \cellcolor{green!25}0 \\
+			\hline \cellcolor{green!25}1 & \cellcolor{green!25}1 & \cellcolor{green!25}0 & \cellcolor{green!25}1 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	
+	\par Жълтите клетки - проверките по четност - попълваме със стойностите, съответстващи на
+	следните четири подгрупи от клетки:
+	
+	\fboxsep=0pt
+	\noindent
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25} & \cellcolor{blue!25} & \cellcolor{white!25} & \cellcolor{blue!25} \\
+			\hline \cellcolor{white!25} & \cellcolor{blue!25} & \cellcolor{white!25} & \cellcolor{blue!25} \\
+			\hline \cellcolor{white!25} & \cellcolor{blue!25} & \cellcolor{white!25} & \cellcolor{blue!25} \\
+			\hline \cellcolor{white!25} & \cellcolor{blue!25} & \cellcolor{white!25} & \cellcolor{blue!25} \\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\hfill%
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{blue!25} & \cellcolor{blue!25} \\
+			\hline \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{blue!25} & \cellcolor{blue!25} \\
+			\hline \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{blue!25} & \cellcolor{blue!25} \\
+			\hline \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{blue!25} & \cellcolor{blue!25} \\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\hfill%
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{white!25} \\
+			\hline \cellcolor{blue!25} & \cellcolor{blue!25} & \cellcolor{blue!25} & \cellcolor{blue!25} \\
+			\hline \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{white!25} \\
+			\hline \cellcolor{blue!25} & \cellcolor{blue!25} & \cellcolor{blue!25} & \cellcolor{blue!25} \\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\hfill%
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{white!25} \\
+			\hline \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{white!25} & \cellcolor{white!25} \\
+			\hline \cellcolor{blue!25} & \cellcolor{blue!25} & \cellcolor{blue!25} & \cellcolor{blue!25} \\
+			\hline \cellcolor{blue!25} & \cellcolor{blue!25} & \cellcolor{blue!25} & \cellcolor{blue!25} \\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\par Можем да забележим, че първите две подгрупи успяват да намерят колоната, в която е
+	възникнала грешка, докато вторите две - редичката.
+	\par Нека попълним и жълтите клетки с проверките по четност за примерното съобщение: \\
+	\vspace{.5cm}
+	\fboxsep=0pt
+	\noindent
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25}  & \cellcolor{blue!25}  & \cellcolor{white!25}  & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}  & \cellcolor{blue!25}0 & \cellcolor{white!25}0 & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}  & \cellcolor{blue!25}1 & \cellcolor{white!25}0 & \cellcolor{blue!25}0 \\
+			\hline \cellcolor{white!25}1 & \cellcolor{blue!25}1 & \cellcolor{white!25}0 & \cellcolor{blue!25}1 \\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\hfill%
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25}  & \cellcolor{white!25}  & \cellcolor{blue!25}  & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}  & \cellcolor{white!25}0 & \cellcolor{blue!25}0 & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}  & \cellcolor{white!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}0 \\
+			\hline \cellcolor{white!25}1 & \cellcolor{white!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}1 \\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25}  & \cellcolor{white!25}  & \cellcolor{white!25}  & \cellcolor{white!25}1 \\
+			\hline \cellcolor{blue!25}  & \cellcolor{blue!25}0 & \cellcolor{blue!25}0 & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}  & \cellcolor{white!25}1 & \cellcolor{white!25}0 & \cellcolor{white!25}0 \\
+			\hline \cellcolor{blue!25}1 & \cellcolor{blue!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}1 \\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25} & \cellcolor{white!25}  & \cellcolor{white!25}  & \cellcolor{white!25}1 \\
+			\hline \cellcolor{white!25} & \cellcolor{white!25}0 & \cellcolor{white!25}0 & \cellcolor{white!25}1 \\
+			\hline \cellcolor{blue!25}  & \cellcolor{blue!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}0 \\
+			\hline \cellcolor{blue!25}1 & \cellcolor{blue!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}1 \\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\par Както може би забелязвате, интересното за позициите на \textit{жълтите клетки}
+	(и причината за именно този избор), е това, че всеки проверочен бит попада в
+	точно една от подгрупите.
+	\break
+	\par Друго важно наблюдение ни показва по какъв начин избрахме точно това да са
+	подгрупите - ако разгледаме отново шаблона за попълване с въведени индексите
+	на всяка от клетките ще забележим, че например първата подгрупа включва тези
+	и само тези клетки, чиито индески завършват на 1.
+	\begin{center}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25}0000  & \cellcolor{blue!25}0001  & \cellcolor{white!25}0010  & \cellcolor{blue!25}0011 \\
+			\hline \cellcolor{white!25}0100  & \cellcolor{blue!25}0101  & \cellcolor{white!25}0110  & \cellcolor{blue!25}0111 \\
+			\hline \cellcolor{white!25}1000  & \cellcolor{blue!25}1001  & \cellcolor{white!25}1010  & \cellcolor{blue!25}1011 \\
+			\hline \cellcolor{white!25}1100  & \cellcolor{blue!25}1011  & \cellcolor{white!25}1110  & \cellcolor{blue!25}1111 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	\par Аналогично следващите подгрупи ни дават тези, включващи \texttt{..1.},
+	\texttt{.1..} и \texttt{1...}.
+	\framebreak
+	\par Така до момента можем да попълним всички без един от битовете в онзи
+	16-битов пакет:
+	\begin{center}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{orange!25} & \cellcolor{yellow!25}1 & \cellcolor{yellow!25}1 & \cellcolor{green!25}1 \\
+			\hline \cellcolor{yellow!25}0 & \cellcolor{green!25}0 & \cellcolor{green!25}0 & \cellcolor{green!25}1 \\
+			\hline \cellcolor{yellow!25}0 & \cellcolor{green!25}1 & \cellcolor{green!25}0 & \cellcolor{green!25}0 \\
+			\hline \cellcolor{green!25}1 & \cellcolor{green!25}1 & \cellcolor{green!25}0 & \cellcolor{green!25}1 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	\par Нека го игнорираме още малко и да разгледаме как точно поправяме възникнала
+	грешка.
+	\par \textbf{Бележка:} До момента можем да кажем, че сме се запознали с (почти
+		цялата) процедура по кодиране и следва да декодираме.
+	
+	\framebreak
+	\par Допускаме, че бит с индекс 6 е бил обърнат.
+	\begin{center}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{orange!25} & \cellcolor{yellow!25}1 & \cellcolor{yellow!25}1 & \cellcolor{green!25}1 \\
+			\hline \cellcolor{yellow!25}0 & \cellcolor{green!25}0 &
+			\cellcolor{green!25}\textcolor{red}{1} & \cellcolor{green!25}1 \\
+			\hline \cellcolor{yellow!25}0 & \cellcolor{green!25}1 & \cellcolor{green!25}0 & \cellcolor{green!25}0 \\
+			\hline \cellcolor{green!25}1 & \cellcolor{green!25}1 & \cellcolor{green!25}0 & \cellcolor{green!25}1 \\
+			\hline
+		\end{tabular}
+	\end{center}
+	
+	\par Извършваме проверките по четност, използвайки подгрупите, определящи
+	стойностите на проверочните битове една по една и записваме резултата от всеки от тях.\\
+	\fboxsep=0pt
+	\noindent
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25}  & \cellcolor{blue!25}1 & \cellcolor{white!25}1 & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}0 & \cellcolor{blue!25}0 & \cellcolor{white!25}\textcolor{red}{1} & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}0 & \cellcolor{blue!25}1 & \cellcolor{white!25}0 & \cellcolor{blue!25}0 \\
+			\hline \cellcolor{white!25}1 & \cellcolor{blue!25}1 & \cellcolor{white!25}0 & \cellcolor{blue!25}1 \\
+			\hline
+		\end{tabular}
+		\begin{center} \par 0 \end{center}
+	\end{minipage}
+	\hfill%
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25}  & \cellcolor{white!25}1 & \cellcolor{blue!25}1 & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}0 & \cellcolor{white!25}0 & \cellcolor{blue!25}\textcolor{red}{1} & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}0 & \cellcolor{white!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}0 \\
+			\hline \cellcolor{white!25}1 & \cellcolor{white!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}1 \\
+			\hline
+		\end{tabular}
+		\begin{center} \par 1 \end{center}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25}  & \cellcolor{white!25}1 & \cellcolor{white!25}1 & \cellcolor{white!25}1 \\
+			\hline \cellcolor{blue!25}0 & \cellcolor{blue!25}0 & \cellcolor{blue!25}\textcolor{red}{1} & \cellcolor{blue!25}1 \\
+			\hline \cellcolor{white!25}0 & \cellcolor{white!25}1 & \cellcolor{white!25}0 & \cellcolor{white!25}0 \\
+			\hline \cellcolor{blue!25}1 & \cellcolor{blue!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}1 \\
+			\hline
+		\end{tabular}
+		\begin{center} \par 1 \end{center}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.23\linewidth}
+		\begin{tabular}{ |c|c|c|c| }
+			\hline \cellcolor{white!25} & \cellcolor{white!25}1 & \cellcolor{white!25}1 & \cellcolor{white!25}1 \\
+			\hline \cellcolor{white!25}0 & \cellcolor{white!25}0 & \cellcolor{white!25}\textcolor{red}{1} & \cellcolor{white!25}1 \\
+			\hline \cellcolor{blue!25}0 & \cellcolor{blue!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}0 \\
+			\hline \cellcolor{blue!25}1 & \cellcolor{blue!25}1 & \cellcolor{blue!25}0 & \cellcolor{blue!25}1 \\
+			\hline
+		\end{tabular}
+		\begin{center} \par 0 \end{center}
+	\end{minipage}
+	\framebreak
+	\par \textbf{Магия!} Получихме именно 6.
+	\par Основната причина този декодиращ алгоритъм да работи (и при това така
+	елегантно) се дължи на организацията на ,,подгрупите'' от битове, чрез които
+	ефективно извършваме двоично търсене - най-десният бит грешен ли е? а този
+	вляво? а този вляво? \dots а най-левият бит грешен ли е?
+	\framebreak
+	\par Последното парче от пъзела е бит с индекс 0 - каква функция изпълнява той?
+	Всъщност той не е полезен за алгоритъма, който разгледахме до момента. Тъй като
+	обаче обичайно 15-битов блок от данни е твърде необичайно (не е степен на 2), последният
+	бит се използва за проверка по четност на останалите 15 бита. По този начин
+	получаваме механизъм за поправяне на единствена грешка, но улавяне на две
+	възникнали. Тази добавка на още един бит за четност обичайно се нарича разширен
+	код на Хеминг.
+\end{frame}
+
+\begin{frame}
+	\par Възникват няколко естествени въпроса.
+	\begin{itemize}
+		\item Има ли подход, по който да кодираме информация така, че да можем да възстановим дори повече от една грешка?
+		\item Има ли как да постигнем това придържайки се към прости алгоритми за кодиране и декодиране? Целта ти е тези операции да бъдат \textit{бързи}.
+	\end{itemize}
+	\par Настоящият проект не претендира да отговаря изчерпателно на тези два въпроса, а само да приближи изготвилия труда, както и слушателите на това представяне, към \textit{истината} \smiley.
 \end{frame}
 
 \section{Линейни блокови кодове}
