@@ -1,0 +1,17 @@
+[0] Config.pm:307> INFO - This is Biber 2.19
+[0] Config.pm:310> INFO - Logfile is 'main.blg'
+[140] biber-MSWIN64:340> INFO - === 
+[194] Biber.pm:419> INFO - Reading 'main.bcf'
+[357] Biber.pm:979> INFO - Found 5 citekeys in bib section 0
+[379] Biber.pm:4419> INFO - Processing section 0
+[398] Biber.pm:4610> INFO - Looking for bibtex file 'bibliography.bib' for section 0
+[462] bibtex.pm:1713> INFO - LaTeX decoding ...
+[472] bibtex.pm:1519> INFO - Found BibTeX data source 'bibliography.bib'
+[560] UCollate.pm:68> INFO - Overriding locale 'bg-BG' defaults 'variable = shifted' with 'variable = non-ignorable'
+[560] UCollate.pm:68> INFO - Overriding locale 'bg-BG' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[560] Biber.pm:4239> INFO - Sorting list 'anyt/global//global/global' of type 'entry' with template 'anyt' and locale 'bg-BG'
+[560] Biber.pm:4245> INFO - No sort tailoring available for locale 'bg-BG'
+[571] bbl.pm:660> INFO - Writing 'main.bbl' with encoding 'UTF-8'
+[573] bbl.pm:763> INFO - Output to main.bbl
+[573] Biber.pm:131> WARN - I didn't find a database entry for 'qr' (section 0)
+[573] Biber.pm:133> INFO - WARNINGS: 1

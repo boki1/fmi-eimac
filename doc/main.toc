@@ -1,0 +1,9 @@
+\babel@toc {bulgarian}{}\relax 
+\beamer@sectionintoc {1}{Какво е код?}{4}{0}{1}
+\beamer@sectionintoc {2}{Основни понятия}{15}{0}{2}
+\beamer@sectionintoc {3}{Линейни блокови кодове}{18}{0}{3}
+\beamer@sectionintoc {4}{Циклични кодове}{43}{0}{4}
+\beamer@sectionintoc {5}{Какво е код на Рид-Соломон?}{53}{0}{5}
+\beamer@sectionintoc {6}{Как се използват Рид-Соломон кодовете?}{55}{0}{6}
+\beamer@sectionintoc {7}{Какви приложения имат Рид-Соломон кодовете?}{57}{0}{7}
+\beamer@sectionintoc {8}{Литература}{60}{0}{8}
